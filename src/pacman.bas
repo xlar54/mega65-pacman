@@ -2,10 +2,10 @@
 20 dim s$(21): rem sprite builder array
 30 dim ac(5,10): rem actor data
 40 dim sp$(25) : rem sprites, including eight level items
-50 gosub 3340:gosub 1600:gosub 1860:gosub 6000:nw=1:cs=0:vol 5,10:ma=5:gosub 4630:d$="{up}{rght}{down}{left}"
+50 gosub 3340:gosub 1600:gosub 1860:gosub 6000:nw=1:cs=0:vol 5,10:ma=4:gosub 4630:d$="{up}{rght}{down}{left}"
 60 dim pt(7):pt(0)=7:pt(1)=20:pt(2)=7:pt(3)=20:pt(4)=5:pt(5)=20:pt(6)=5:pt(7)=9999
 70 dim st(4,1):st(1,0)=25:st(1,1)=1:st(2,0)=1:st(2,1)=1:st(3,0)=25:st(3,1)=21:st(4,0)=1:st(4,1)=21
-80 dim ge(4),gr(4),cd(4),gb(4)
+80 dim ge(4),gr(4),cd(4),gb(4),rb(4)
 85 dim hn$(10),hd$(10),hv(10):gosub 5000
 86 dim pv(8),zc(8)
 87 pv(1)=100:pv(2)=300:pv(3)=500:pv(4)=700:pv(5)=1000:pv(6)=2000:pv(7)=3000:pv(8)=5000
@@ -36,11 +36,11 @@
 310 bend
 320 return
 330 rem sprite to sprite collision handler
-340 co%=bump(1):if xx=0 then xx=((co% and 1)=0)+1
+340 cm%=bump(1):co%=co% or cm%:if xx=0 then xx=((co% and 1)=0)+1
 350 return:rem 1540
 360 rem init screen
-370 border0: background0:color1:fort=0to6:movspr t,0#0:spritet,0:next:dc=209
-380 gd=0:gc=0:ld=ti:fr=0:gs=100:fa=0:fu=0:fd=0
+370 border0: background0:color1:fort=0to6:movspr t,0#0:spritet,0:next:dc=0
+380 gd=0:gc=0:ld=ti:fr=0:gs=100:fa=0:fu=0:fd=0:mc=0:gosub 5900
 390 collision 1,330: rem sprite to sprite collision interrupt
 400 print"{clr}{lblu}";
 410 print"OCCCCCCCCCCCC{CBM-R}CCCCCCCCCCCCP
@@ -73,11 +73,12 @@
 680 print"{home}";
 690 rem color
 700 fory=0to22:forx=0to26
+705  if t@&(x,y)=46 or t@&(x,y)=81 then dc=dc+1
 710  ift@&(x,y)=46 or t@&(x,y)=81 or t@&(x,y)=32 then c@&(x,y)=10:else c@&(x,y)=6
 720 nextx:nexty
 730 rem c@&(13,9)=3:c@&(14,9)=3
 740 rem sprite starting positions
-750 for t=1 to 4:ge(t)=0:gr(t)=0:gb(t)=0:next t
+750 for t=1 to 4:ge(t)=0:gr(t)=0:gb(t)=0:rb(t)=0:next t
 760 sn=0:sprsav sp$(sn),0
 770 sprsav sp$(6),1:sprsav sp$(7),2:sprsav sp$(8),3:sprsav sp$(9),4
 780 sprite 0,1,ac(0,0):movspr 0,ac(0,1)#ac(0,2):movspr 0,ac(0,3),ac(0,4)
@@ -86,24 +87,28 @@
 810 sprite 3,1,ac(3,0):movspr 3,ac(3,1)#ac(3,2):movspr 3,ac(3,3),ac(3,4)
 820 sprite 4,1,ac(4,0):movspr 4,ac(4,1)#ac(4,2):movspr 4,ac(4,3),ac(4,4)
 830 rem ready!
-840 t=bump(1):xx=0:cursor 11,12:print"{yel}ready!":gosub 4560
+840 t=bump(1):co%=0:xx=0:cursor 11,12:print"{yel}ready!":gosub 4560
 850 rem if new game, play music, else wait briefly
 860 if nw=1 then gosub 3310:nw=0:sleep4.0:goto880
 870 sleep 2
 880 cursor 11,12:print"      "
 890 rem movement loop
 900 rem current speed and original speed
-910 pc=0:gt=ti:gm=0
+910 pc=0:gt=ti:gm=0:ut=ti
 920 fort=0to4
-930  ac(t,2)=0.9:ac(t,9)=ac(t,2)
+930  ac(t,2)=vg
+932  if t=0 then ac(t,2)=vp
+934  ac(t,9)=ac(t,2)
 940  ac(t,7)=rsppos(t,0):ac(t,8)=rsppos(t,1)
 950 nextt
 960 b$="{left}"
+965 if ti-ut<0.02 then 965
+966 ut=ti
 970 for ca=0 to ma
 980  if ca=0 then j=joy(3) and 15:if (j and 1)=1 then b$=mid$(d$,(j+1)/2,1)
 990 if ca=0 and fr=0 and pc<7 and ti-gt>=pt(pc) then pc=pc+1:gt=ti:gm=pc and 1:gosub 3780
-1000 if ca=0 and fr=1 and ti-fz>=6 then fr=0:gt=gt+(ti-fz):gosub 4460
-1010 if ca=0 and fr=1 and ti-fz>=4.5 then gosub 4520
+1000 if ca=0 and fr=1 and ti-fz>=du then fr=0:gt=gt+(ti-fz):gosub 4460
+1010 if ca=0 and fr=1 and ti-fz>=wa then gosub 4520
 1020  ac(ca,7)=rsppos(ca,0):ac(ca,8)=rsppos(ca,1)
 1025  if ca=0 and fu=1 then gosub 5700
 1030  px=ac(ca,7)-22:py=ac(ca,8)-50
@@ -116,7 +121,7 @@
 1100  rem ifca=0then cursor 0,23:print"ai=";ai;" tx=";tx;" ty=";ty;" px=";px
 1110  gosub 130
 1120  if ai=-1 then begin
-1130 if xx=1 then xx=0:gosub 4230:if dth=1 then dth=0:goto 1540
+1130 rem collisions are resolved after every complete actor update pass
 1140    c=t@&(tx,ty)
 1150    ml=c@&(tx-1,ty):mr=c@&(tx+1,ty):mu=c@&(tx,ty-1):md=c@&(tx,ty+1)
 1160    if ty=10 and (tx<=2 or tx>=25) then mu=6:md=6
@@ -124,7 +129,7 @@
 1180    if ca=0 then begin
 1190 if c=46 then t@&(tx,ty)=32:cs=cs+10:gc=gc+1:ld=ti:gosub 100:goto1210
 1200 if c=81 then t@&(tx,ty)=32:cs=cs+100:gosub 100:gosub 4380:goto1210
-1210     if dc=0 then 1450
+1210     if dc=0 then mc=1
 1220    if b$="{left}" and ml<>6 then ac(0,1)=270
 1230    if b$="{rght}" and mr<>6 then ac(0,1)=90
 1240    if b$="{up}" and mu<>6 then ac(0,1)=0
@@ -139,6 +144,13 @@
 1330    ac(ca,2)=ac(ca,9):an(ca)=1:if no=1 then ac(ca,2)=0:an(ca)=0
 1340   bend
 1350 if ca>0 and ca<5 and ai=-1 then gosub 3480
+1351 if ca>0 and ca<5 and ge(ca)=0 then begin
+1352  ac(ca,2)=vg
+1353  if ca=1 and dc<=e1 then ac(ca,2)=vg*r1
+1354  if ca=1 and dc<=e2 then ac(ca,2)=vg*r2
+1355  if gb(ca)=1 then ac(ca,2)=vf
+1356  if ty=10 and (tx<=5 or tx>=21) then ac(ca,2)=ac(ca,2)*0.5
+1357 bend
 1360  dx=0:dy=0:qx=mod(px,8):qy=mod(py-7,8)
 1370  if ac(ca,1)=90  then dx=8-qx
 1380  if ac(ca,1)=270 then dx=qx-8:if qx>0 then dx=-qx
@@ -147,6 +159,8 @@
 1410  if ac(ca,2)>0 then movspr ca,px+22,py+50 to px+22+dx,py+50+dy,ac(ca,2)
 1420 bend
 1430 next ca
+1432 if mc=1 then 1450
+1435 if xx=1 then xx=0:gosub 4230:co%=0:if dth=1 then dth=0:goto 1540
 1440 goto 970
 1450 rem cleared screen
 1460 sprite 0,0:sprite 5,0:fu=0:sound clr
@@ -158,9 +172,16 @@
 1520 nextx
 1530 le=le+1:gosub 3340:goto 360
 1540 rem player dies
-1550 fu=0:sprite 5,0:sound 1,1,1:sound 5,1,1:sound 4,16000,90,1,2000,300,2,2048:fort=1to4:spritet,0:next:sleep 0.2
-1560 fort=10to12:sprsav sp$(t),0:sleep 0.4:nextt:sprite 0,0:sleep 0.4
-1570 sound 4,3000,10,1,500,400,2,2048:sleep 0.25:sound 4,3000,10,1,500,400,2,2048:sleep 0.3
+1545 for t=0 to 4:movspr t,0#0:next t:sleep 0.5
+1550 fu=0:sprite 5,0:sound 1,1,1:sound 5,1,1:fort=1to4:spritet,0:next:sleep 0.2
+1560 q=0
+1562 for t=10 to 12
+1564  sprsav sp$(t),0
+1566  for z=1 to 4
+1568   q=q+1:sound 4,24000-q*1800,5,2,0,1200,1,0:sleep 0.09
+1570  next z
+1572 next t
+1574 sprite 0,0:sleep 0.3
 1580 gd=1:gc=0:ld=ti:fr=0:sound 5,1,1:lv=lv-1:gosub 4560:if lv<0 then 4600
 1590 gosub 3340:goto 740
 1600 rem character defs
@@ -395,6 +416,7 @@
 3520 if ty=10 and tx>=11 and tx<=15 then goto 3840
 3530 if gb(ca)=1 then 4150
 3540 d=ac(ca,1):od=d+180:if od>=360 then od=od-360
+3545 if ca=1 and dc<=e1 then 3570
 3550 if gm=0 then gx=st(ca,0):gy=st(ca,1):goto 3680
 3560 rem chase targets
 3570 if ca=1 then gx=ac(0,5):gy=ac(0,6):goto 3680
@@ -420,27 +442,32 @@
 3770 nv=(nx-gx)*(nx-gx)+(ny-gy)*(ny-gy):return
 3780 rem mode switch: ghosts reverse (arcade rule)
 3790 for t=1 to 4
+3795 if gr(t)=0 or ge(t)=1 then 3820
 3800 a=ac(t,1)+180:if a>=360 then a=a-360
 3810 ac(t,1)=a
 3820 next t
 3830 return
 3840 rem ghost house: staggered release, then out through the door
 3850 rl=0
-3860 if ti-ld>=4 then rl=1:ld=ti:goto 3960
+3855 if rb(ca)>0 then 3970
+3860 if ti-ld>=rt then rl=1:ld=ti:goto 3960
 3870 if gr(ca)=1 then rl=1:goto 3960
 3880 if gd=1 then 3930
 3890 if ca=1 or ca=2 then rl=1
-3900 if ca=3 and dc<=146 then rl=1
-3910 if ca=4 and dc<=139 then rl=1
+3900 if ca=3 and fd>=p3 then rl=1
+3910 if ca=4 and fd>=p4 then rl=1
 3920 goto 3960
 3930 if ca=2 and gc>=7 then rl=1
 3940 if ca=3 and gc>=17 then rl=1
 3950 if ca=4 and gc>=32 then rl=1
 3960 if rl=1 then 4020
 3970 rem waiting: pace between the pen walls
-3980 if ac(ca,1)=90 and mr=6 then ac(ca,1)=270:return
-3990 if ac(ca,1)=270 and ml=6 then ac(ca,1)=90:return
-4000 if ac(ca,1)<>90 and ac(ca,1)<>270 then ac(ca,1)=90
+3975 rv=0:rr=0
+3980 if ac(ca,1)=90 and mr=6 then ac(ca,1)=270:rv=1
+3990 if ac(ca,1)=270 and ml=6 then ac(ca,1)=90:rv=1
+4000 if rv=1 and rb(ca)>0 then rb(ca)=rb(ca)-1:rr=1
+4002 if rr=1 and rb(ca)=0 then 4020
+4005 if ac(ca,1)<>90 and ac(ca,1)<>270 then ac(ca,1)=90
 4010 return
 4020 rem released: line up on the door column, then go up through it
 4030 if tx<13 then ac(ca,1)=90:return
@@ -451,8 +478,8 @@
 4080 if ty=10 and tx>=11 and tx<=15 then 4110
 4090 if ty=8 and tx=13 then ac(ca,1)=180:return
 4100 gx=13:gy=8:goto 3680
-4110 rem reform: shape, colour, speed back; leave immediately
-4120 ge(ca)=0:gr(ca)=1:ac(ca,2)=0.9
+4110 rem reform, then bounce one or two times before leaving
+4120 ge(ca)=0:gr(ca)=0:ac(ca,1)=90:ac(ca,2)=vg:rb(ca)=2+2*int(rnd(1)*2)
 4130 sprsav sp$(5+ca),ca:sprite ca,1,ac(ca,0)
 4140 goto 3840
 4150 rem frightened: random turn at each tile
@@ -463,32 +490,38 @@
 4200 if mr<>6 and od<>90 then k=k+1:cd(k)=90
 4210 if k=0 then ac(ca,1)=od:return
 4220 ac(ca,1)=cd(int(rnd(1)*k)+1):return
-4230 rem collision resolve: eat frightened ghosts or die
+4230 rem collision resolve: lethal contacts take priority
 4240 dth=0
 4250 for t=1 to 4
-4260 if (co% and (2^t))=0 then 4360
-4270 if abs(rsppos(t,0)-rsppos(0,0))>16 or abs(rsppos(t,1)-rsppos(0,1))>16 then 4360
-4280 if ge(t)=1 then 4360
-4290 if gb(t)=0 then 4350
-4300 gs=gs*2:cs=cs+gs:gosub 120:ge(t)=1:gb(t)=0:sprsav sp$(13),t:sprite t,1,1:ac(t,2)=1.5
-4310 nc=nc+1:sound 6,20000,14,0,0,2200,2,2048:if nc>4 then nc=4
-4320 sprsav sp$(13+nc),6:movspr 6,ac(0,7),ac(0,8)-20:sprite 6,1,3
-4330 sleep 0.75:sprite 6,0:fz=fz+0.75
-4340 goto 4360
-4350 dth=1
-4360 next t
-4370 return
+4260 if (co% and (2^t))=0 then 4300
+4270 if abs(rsppos(t,0)-rsppos(0,0))>16 or abs(rsppos(t,1)-rsppos(0,1))>16 then 4300
+4280 if ge(t)=1 then 4300
+4290 if gb(t)=0 then dth=1
+4300 next t
+4310 if dth=1 then return
+4320 for t=1 to 4
+4321 if (co% and (2^t))=0 then 4332
+4322 if abs(rsppos(t,0)-rsppos(0,0))>16 or abs(rsppos(t,1)-rsppos(0,1))>16 then 4332
+4323 if ge(t)=1 or gb(t)=0 then 4332
+4324 gs=gs*2:cs=cs+gs:gosub 120:ge(t)=1:gb(t)=0:sprsav sp$(13),t:sprite t,1,1:ac(t,2)=1.5
+4325 nc=nc+1:sound 6,20000,14,0,0,2200,2,2048:if nc>4 then nc=4
+4326 sprsav sp$(13+nc),6:movspr 6,ac(0,7),ac(0,8)-20:sprite 6,1,3
+4327 pd=0.75:gosub 5750:sprite 6,0
+4332 next t
+4334 return
 4380 rem power pellet: frighten the ghosts
 4390 gc=gc+1:ld=ti:fr=1:fz=ti:gs=100:nc=0:sound 1,1,1:sound 5,8000,360,2,2000,1200,2,2048
 4400 for t=1 to 4
 4410 if ge(t)=1 then 4440
+4415 if gr(t)=0 then 4430
 4420 a=ac(t,1)+180:if a>=360 then a=a-360
-4430 ac(t,1)=a:ac(t,2)=0.55:sprite t,1,6:gb(t)=1
+4425 ac(t,1)=a
+4430 ac(t,2)=vf:sprite t,1,6:gb(t)=1
 4440 next t
 4450 return
 4460 rem frightened over: colours and speeds back
 4470 for t=1 to 4
-4480 if gb(t)=1 then ac(t,2)=0.9:sprite t,1,ac(t,0):gb(t)=0
+4480 if gb(t)=1 then ac(t,2)=vg:sprite t,1,ac(t,0):gb(t)=0
 4490 next t
 4500 sound 5,1,1:at=0
 4510 return
@@ -623,6 +656,12 @@
 5720 if abs(ac(0,7)-126)>12 or abs(ac(0,8)-177)>12 then return
 5730 fu=0:sprite 5,0:cs=cs+fv:gosub 120
 5740 sound 6,24000,16,1,12000,900,2,2048:return
+5750 rem pause gameplay without advancing active clocks
+5760 sleep pd
+5770 gt=gt+pd:ld=ld+pd:ft=ft+pd:lt=lt+pd
+5780 if fr=1 then fz=fz+pd
+5790 if fu=1 then fe=fe+pd
+5795 return
 5800 rem map a level in ll to item number fi
 5810 fi=8
 5820 if ll<=12 then fi=7
@@ -633,6 +672,26 @@
 5870 if ll=2 then fi=2
 5880 if ll=1 then fi=1
 5890 return
+5900 rem level difficulty table
+5910 vp=0.9:vg=0.9:vf=0.45:du=6:bw=2.5:p3=30:p4=60:rt=4
+5912 if le>=2 then vp=0.95:vg=0.95:vf=0.475:du=5:bw=2.25:p3=0:p4=50
+5914 if le>=3 then vp=1:vg=1:vf=0.5:du=4:bw=2:p3=0:p4=0
+5916 if le>=5 then vp=1:vg=1.05:vf=0.525:du=3:bw=1.5:rt=3
+5918 if le>=9 then vp=1.05:vg=1.1:vf=0.55:du=2:bw=1
+5920 if le>=13 then vp=1.05:vg=1.15:vf=0.575:du=1:bw=0.5
+5922 r1=1.1:r2=1.2:e1=20:e2=10
+5923 if le>=2 then e1=30:e2=15
+5924 if le>=3 then e1=40:e2=20
+5925 if le>=6 then e1=50:e2=25
+5926 if le>=9 then e1=60:e2=30
+5927 if le>=12 then e1=80:e2=40
+5928 if le>=15 then e1=100:e2=50
+5929 if le>=19 then e1=120:e2=60
+5930 wa=du-bw:if wa<0 then wa=0
+5940 pt(0)=7:pt(1)=20:pt(2)=7:pt(3)=20:pt(4)=5:pt(5)=20:pt(6)=5:pt(7)=9999
+5950 if le>=2 then pt(5)=1033:pt(6)=1
+5960 if le>=5 then pt(0)=5:pt(2)=5:pt(5)=1037
+5970 return
 6000 rem item character definitions and sprite shapes
 6010 chardef 92,12,18,4,26,60,90,36,0:rem cherry
 6020 chardef 93,36,126,60,126,60,24,24,0:rem strawberry
