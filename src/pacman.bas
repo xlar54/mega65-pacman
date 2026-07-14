@@ -1,10 +1,10 @@
 10 print"{clr}";chr$(27);"x";
 20 dim s$(21): rem sprite builder array
 30 dim ac(5,10): rem actor data
-40 dim sp$(25) : rem sprites, including eight level items
+40 dim sp$(33) : rem sprites, including items and their point popups
 50 gosub 3340:gosub 1600:gosub 1860:gosub 6000:nw=1:cs=0:vol 5,10:ma=4:gosub 4630:d$="{up}{rght}{down}{left}"
 60 dim pt(7):pt(0)=7:pt(1)=20:pt(2)=7:pt(3)=20:pt(4)=5:pt(5)=20:pt(6)=5:pt(7)=9999
-70 dim st(4,1):st(1,0)=25:st(1,1)=1:st(2,0)=1:st(2,1)=1:st(3,0)=25:st(3,1)=21:st(4,0)=1:st(4,1)=21
+70 dim st(4,1):st(1,0)=25:st(1,1)=-3:st(2,0)=2:st(2,1)=-3:st(3,0)=27:st(3,1)=25:st(4,0)=0:st(4,1)=25
 80 dim ge(4),gr(4),cd(4),gb(4),rb(4)
 85 dim hn$(10),hd$(10),hv(10):gosub 5000
 86 dim pv(8),zc(8)
@@ -17,7 +17,12 @@
 120 cursor 30,7:print "{lblu}"+right$("000000"+mid$(str$(cs),2),6):gosub 4850:return
 130 rem interrupt. sound, flash pp, anim pac
 140 ct=ti
-150 if ct-at >= 1.95 and fr=0 then sound 1,16000,100,2,8000,700,2,2000:at=ct
+142 sf=16000
+144 if dc<=td*0.75 then sf=19000
+146 if dc<=td*0.5 then sf=22000
+148 if dc<=td*0.25 then sf=25000
+149 if dc<=td*0.1 then sf=28000
+150 if ct-at>=1.95 and fr=0 then sound 1,sf,100,2,sf/2,700,2,2000:at=ct
 160 if ct-ft >= 0.25 then begin
 170   fp=fp+1:if fp=2 then fp=0
 180   c@&(1,2)=fp:c@&(25,2)=fp:c@&(1,16)=fp:c@&(25,16)=fp
@@ -40,7 +45,7 @@
 350 return:rem 1540
 360 rem init screen
 370 border0: background0:color1:fort=0to6:movspr t,0#0:spritet,0:next:dc=0
-380 gd=0:gc=0:ld=ti:fr=0:gs=100:fa=0:fu=0:fd=0:mc=0:gosub 5900
+380 gd=0:gc=0:ld=ti:fr=0:gs=100:fa=0:fu=0:fs=0:fd=0:mc=0:el=1:gosub 5900
 390 collision 1,330: rem sprite to sprite collision interrupt
 400 print"{clr}{lblu}";
 410 print"OCCCCCCCCCCCC{CBM-R}CCCCCCCCCCCCP
@@ -76,6 +81,7 @@
 705  if t@&(x,y)=46 or t@&(x,y)=81 then dc=dc+1
 710  ift@&(x,y)=46 or t@&(x,y)=81 or t@&(x,y)=32 then c@&(x,y)=10:else c@&(x,y)=6
 720 nextx:nexty
+725 td=dc
 730 rem c@&(13,9)=3:c@&(14,9)=3
 740 rem sprite starting positions
 750 for t=1 to 4:ge(t)=0:gr(t)=0:gb(t)=0:rb(t)=0:next t
@@ -110,7 +116,7 @@
 1000 if ca=0 and fr=1 and ti-fz>=du then fr=0:gt=gt+(ti-fz):gosub 4460
 1010 if ca=0 and fr=1 and ti-fz>=wa then gosub 4520
 1020  ac(ca,7)=rsppos(ca,0):ac(ca,8)=rsppos(ca,1)
-1025  if ca=0 and fu=1 then gosub 5700
+1025  if ca=0 and (fu=1 or fs=1) then gosub 5700
 1030  px=ac(ca,7)-22:py=ac(ca,8)-50
 1040  rem check for tunnel
 1050  if px>219 and py=79 then px=8 :movspr ca,px,py+50:goto1070
@@ -128,7 +134,7 @@
 1170    ac(ca,5)=tx:ac(ca,6)=ty
 1180    if ca=0 then begin
 1190 if c=46 then t@&(tx,ty)=32:cs=cs+10:gc=gc+1:ld=ti:gosub 100:goto1210
-1200 if c=81 then t@&(tx,ty)=32:cs=cs+100:gosub 100:gosub 4380:goto1210
+1200 if c=81 then t@&(tx,ty)=32:cs=cs+50:gosub 100:gosub 4380:goto1210
 1210     if dc=0 then mc=1
 1220    if b$="{left}" and ml<>6 then ac(0,1)=270
 1230    if b$="{rght}" and mr<>6 then ac(0,1)=90
@@ -146,8 +152,8 @@
 1350 if ca>0 and ca<5 and ai=-1 then gosub 3480
 1351 if ca>0 and ca<5 and ge(ca)=0 then begin
 1352  ac(ca,2)=vg
-1353  if ca=1 and dc<=e1 then ac(ca,2)=vg*r1
-1354  if ca=1 and dc<=e2 then ac(ca,2)=vg*r2
+1353  if ca=1 and el=1 and dc<=e1 then ac(ca,2)=vg*r1
+1354  if ca=1 and el=1 and dc<=e2 then ac(ca,2)=vg*r2
 1355  if gb(ca)=1 then ac(ca,2)=vf
 1356  if ty=10 and (tx<=5 or tx>=21) then ac(ca,2)=ac(ca,2)*0.5
 1357 bend
@@ -163,7 +169,8 @@
 1435 if xx=1 then xx=0:gosub 4230:co%=0:if dth=1 then dth=0:goto 1540
 1440 goto 970
 1450 rem cleared screen
-1460 sprite 0,0:sprite 5,0:fu=0:sound clr
+1455 for t=0to4:movspr t,0#0:next t:sound clr:sleep 1
+1460 for t=0to5:sprite t,0:next t:fu=0:fs=0
 1470 forx=1to4
 1480  edma 3,80*25,0,$1f800
 1490  sleep 0.25
@@ -173,7 +180,7 @@
 1530 le=le+1:gosub 3340:goto 360
 1540 rem player dies
 1545 for t=0 to 4:movspr t,0#0:next t:sleep 0.5
-1550 fu=0:sprite 5,0:sound 1,1,1:sound 5,1,1:fort=1to4:spritet,0:next:sleep 0.2
+1550 fu=0:fs=0:sprite 5,0:sound 1,1,1:sound 5,1,1:fort=1to4:spritet,0:next:sleep 0.2
 1560 q=0
 1562 for t=10 to 12
 1564  sprsav sp$(t),0
@@ -182,7 +189,7 @@
 1570  next z
 1572 next t
 1574 sprite 0,0:sleep 0.3
-1580 gd=1:gc=0:ld=ti:fr=0:sound 5,1,1:lv=lv-1:gosub 4560:if lv<0 then 4600
+1580 gd=1:gc=0:ld=ti:fr=0:el=0:sound 5,1,1:lv=lv-1:gosub 4560:if lv<0 then 4600
 1590 gosub 3340:goto 740
 1600 rem character defs
 1610 chardef 46,0,0,0,24,24,0,0,0                : rem dots
@@ -416,12 +423,12 @@
 3520 if ty=10 and tx>=11 and tx<=15 then goto 3840
 3530 if gb(ca)=1 then 4150
 3540 d=ac(ca,1):od=d+180:if od>=360 then od=od-360
-3545 if ca=1 and dc<=e1 then 3570
+3545 if ca=1 and el=1 and dc<=e1 then 3570
 3550 if gm=0 then gx=st(ca,0):gy=st(ca,1):goto 3680
 3560 rem chase targets
 3570 if ca=1 then gx=ac(0,5):gy=ac(0,6):goto 3680
 3580 ux=0:uy=0:pd=ac(0,1)
-3590 if pd=0 then uy=-1
+3590 if pd=0 then ux=-1:uy=-1
 3600 if pd=90 then ux=1
 3610 if pd=180 then uy=1
 3620 if pd=270 then ux=-1
@@ -472,7 +479,9 @@
 4020 rem released: line up on the door column, then go up through it
 4030 if tx<13 then ac(ca,1)=90:return
 4040 if tx>13 then ac(ca,1)=270:return
-4050 ac(ca,1)=0:gr(ca)=1:return
+4050 ac(ca,1)=0:gr(ca)=1
+4052 if ca=4 then el=1
+4055 return
 4060 rem eyes: return to the pen
 4070 if ty=9 and tx=13 then ac(ca,1)=180:return
 4080 if ty=10 and tx>=11 and tx<=15 then 4110
@@ -494,14 +503,14 @@
 4240 dth=0
 4250 for t=1 to 4
 4260 if (co% and (2^t))=0 then 4300
-4270 if abs(rsppos(t,0)-rsppos(0,0))>16 or abs(rsppos(t,1)-rsppos(0,1))>16 then 4300
+4270 if abs(rsppos(t,0)-rsppos(0,0))>12 or abs(rsppos(t,1)-rsppos(0,1))>12 then 4300
 4280 if ge(t)=1 then 4300
 4290 if gb(t)=0 then dth=1
 4300 next t
 4310 if dth=1 then return
 4320 for t=1 to 4
 4321 if (co% and (2^t))=0 then 4332
-4322 if abs(rsppos(t,0)-rsppos(0,0))>16 or abs(rsppos(t,1)-rsppos(0,1))>16 then 4332
+4322 if abs(rsppos(t,0)-rsppos(0,0))>12 or abs(rsppos(t,1)-rsppos(0,1))>12 then 4332
 4323 if ge(t)=1 or gb(t)=0 then 4332
 4324 gs=gs*2:cs=cs+gs:gosub 120:ge(t)=1:gb(t)=0:sprsav sp$(13),t:sprite t,1,1:ac(t,2)=1.5
 4325 nc=nc+1:sound 6,20000,14,0,0,2200,2,2048:if nc>4 then nc=4
@@ -510,13 +519,17 @@
 4332 next t
 4334 return
 4380 rem power pellet: frighten the ghosts
-4390 gc=gc+1:ld=ti:fr=1:fz=ti:gs=100:nc=0:sound 1,1,1:sound 5,8000,360,2,2000,1200,2,2048
+4385 if fr=1 then gt=gt+(ti-fz)
+4390 gc=gc+1:ld=ti:fr=1:fz=ti:gs=100:nc=0:sound 1,1,1
+4392 if du>0 then sound 5,8000,360,2,2000,1200,2,2048
+4395 if du=0 then fr=0
 4400 for t=1 to 4
 4410 if ge(t)=1 then 4440
 4415 if gr(t)=0 then 4430
 4420 a=ac(t,1)+180:if a>=360 then a=a-360
 4425 ac(t,1)=a
-4430 ac(t,2)=vf:sprite t,1,6:gb(t)=1
+4430 if du=0 then 4440
+4435 ac(t,2)=vf:sprite t,1,6:gb(t)=1
 4440 next t
 4450 return
 4460 rem frightened over: colours and speeds back
@@ -539,9 +552,9 @@
 4600 sound clr:print chr$(147):cursor 15,12:print"{yel}game over"
 4605 sleep 3
 4610 if cs>0 and (hc<10 or cs>hv(hc)) then gosub 5500
-4615 print chr$(147):cs=0:lv=3:le=1:nw=1:xl=0:goto 4650
+4615 print chr$(147):cs=0:lv=2:le=1:nw=1:xl=0:goto 4650
 4620 rem one-time init: mini pacman glyph on char 60
-4630 chardef 60,60,126,248,240,240,248,126,60:lv=3:le=1
+4630 chardef 60,60,126,248,240,240,248,126,60:lv=2:le=1
 4640 return
 4650 rem attract mode: swap the center panel every 3 seconds
 4660 border 0:background 0:print chr$(147):q$=chr$(34)
@@ -650,11 +663,12 @@
 5650 rem show the level item after 70 and 170 pellets
 5660 fa=fa+1:ll=le:gosub 5800
 5670 sprsav sp$(17+fi),5:movspr 5,0#0:movspr 5,126,177:sprite 5,1,zc(fi)
-5680 fu=1:fe=ti+9:fv=pv(fi):return
+5680 fu=1:fs=0:fe=ti+9+rnd(1):fv=pv(fi):return
 5700 rem expire or collect the visible item
-5710 if ti>=fe then fu=0:sprite 5,0:return
+5710 if ti>=fe then fu=0:fs=0:sprite 5,0:return
+5715 if fs=1 then return
 5720 if abs(ac(0,7)-126)>12 or abs(ac(0,8)-177)>12 then return
-5730 fu=0:sprite 5,0:cs=cs+fv:gosub 120
+5730 fu=0:fs=1:fe=ti+1:sprsav sp$(25+fi),5:sprite 5,1,zc(fi):cs=cs+fv:gosub 120
 5740 sound 6,24000,16,1,12000,900,2,2048:return
 5750 rem pause gameplay without advancing active clocks
 5760 sleep pd
@@ -673,13 +687,14 @@
 5880 if ll=1 then fi=1
 5890 return
 5900 rem level difficulty table
-5910 vp=0.9:vg=0.9:vf=0.45:du=6:bw=2.5:p3=30:p4=60:rt=4
-5912 if le>=2 then vp=0.95:vg=0.95:vf=0.475:du=5:bw=2.25:p3=0:p4=50
-5914 if le>=3 then vp=1:vg=1:vf=0.5:du=4:bw=2:p3=0:p4=0
-5916 if le>=5 then vp=1:vg=1.05:vf=0.525:du=3:bw=1.5:rt=3
-5918 if le>=9 then vp=1.05:vg=1.1:vf=0.55:du=2:bw=1
-5920 if le>=13 then vp=1.05:vg=1.15:vf=0.575:du=1:bw=0.5
-5922 r1=1.1:r2=1.2:e1=20:e2=10
+5910 vp=0.9:vg=0.84:vf=0.42:du=6:bw=2.5:p3=30:p4=60:rt=4
+5912 if le>=2 then vp=0.95:vg=0.89:vf=0.445:du=5:bw=2.25:p3=0:p4=50
+5914 if le>=3 then vp=1:vg=0.94:vf=0.47:du=4:bw=2:p3=0:p4=0
+5916 if le>=5 then vp=1:vg=0.95:vf=0.475:du=3:bw=1.5:rt=3
+5918 if le>=9 then vp=1.05:vg=0.99:vf=0.495:du=2:bw=1
+5920 if le>=13 then vp=1.05:vg=1:vf=0.5:du=1:bw=0.5
+5921 if le=17 or le>=19 then du=0:bw=0
+5922 r1=1.06:r2=1.12:e1=20:e2=10
 5923 if le>=2 then e1=30:e2=15
 5924 if le>=3 then e1=40:e2=20
 5925 if le>=6 then e1=50:e2=25
@@ -797,4 +812,85 @@
 6249 s$(8)=""
 6250 s$(9)=""
 6251 sn=25:gosub 3180
-6260 return
+6260 rem bonus item point popup sprites
+6270 rem 100 point sprite
+6271 s$(1)="       #  ### ###"
+6272 s$(2)="      ##  # # # #"
+6273 s$(3)="       #  # # # #"
+6274 s$(4)="       #  # # # #"
+6275 s$(5)="       #  # # # #"
+6276 s$(6)="       #  # # # #"
+6277 s$(7)="      ### ### ###"
+6278 s$(0)="":s$(8)="":s$(9)=""
+6279 sn=26:gosub 3180
+6280 rem 300 point sprite
+6281 s$(1)="      ### ### ###"
+6282 s$(2)="        # # # # #"
+6283 s$(3)="        # # # # #"
+6284 s$(4)="      ### # # # #"
+6285 s$(5)="        # # # # #"
+6286 s$(6)="        # # # # #"
+6287 s$(7)="      ### ### ###"
+6288 s$(0)="":s$(8)="":s$(9)=""
+6289 sn=27:gosub 3180
+6290 rem 500 point sprite
+6291 s$(1)="      ### ### ###"
+6292 s$(2)="      #   # # # #"
+6293 s$(3)="      #   # # # #"
+6294 s$(4)="      ### # # # #"
+6295 s$(5)="        # # # # #"
+6296 s$(6)="        # # # # #"
+6297 s$(7)="      ### ### ###"
+6298 s$(0)="":s$(8)="":s$(9)=""
+6299 sn=28:gosub 3180
+6300 rem 700 point sprite
+6301 s$(1)="      ### ### ###"
+6302 s$(2)="        # # # # #"
+6303 s$(3)="        # # # # #"
+6304 s$(4)="        # # # # #"
+6305 s$(5)="        # # # # #"
+6306 s$(6)="        # # # # #"
+6307 s$(7)="        # ### ###"
+6308 s$(0)="":s$(8)="":s$(9)=""
+6309 sn=29:gosub 3180
+6310 rem 1000 point sprite
+6311 s$(1)="     #  ### ### ###"
+6312 s$(2)="    ##  # # # # # #"
+6313 s$(3)="     #  # # # # # #"
+6314 s$(4)="     #  # # # # # #"
+6315 s$(5)="     #  # # # # # #"
+6316 s$(6)="     #  # # # # # #"
+6317 s$(7)="    ### ### ### ###"
+6318 s$(0)="":s$(8)="":s$(9)=""
+6319 sn=30:gosub 3180
+6320 rem 2000 point sprite
+6321 s$(1)="    ### ### ### ###"
+6322 s$(2)="      # # # # # # #"
+6323 s$(3)="      # # # # # # #"
+6324 s$(4)="    ### # # # # # #"
+6325 s$(5)="    #   # # # # # #"
+6326 s$(6)="    #   # # # # # #"
+6327 s$(7)="    ### ### ### ###"
+6328 s$(0)="":s$(8)="":s$(9)=""
+6329 sn=31:gosub 3180
+6330 rem 3000 point sprite
+6331 s$(1)="    ### ### ### ###"
+6332 s$(2)="      # # # # # # #"
+6333 s$(3)="      # # # # # # #"
+6334 s$(4)="    ### # # # # # #"
+6335 s$(5)="      # # # # # # #"
+6336 s$(6)="      # # # # # # #"
+6337 s$(7)="    ### ### ### ###"
+6338 s$(0)="":s$(8)="":s$(9)=""
+6339 sn=32:gosub 3180
+6340 rem 5000 point sprite
+6341 s$(1)="    ### ### ### ###"
+6342 s$(2)="    #   # # # # # #"
+6343 s$(3)="    #   # # # # # #"
+6344 s$(4)="    ### # # # # # #"
+6345 s$(5)="      # # # # # # #"
+6346 s$(6)="      # # # # # # #"
+6347 s$(7)="    ### ### ### ###"
+6348 s$(0)="":s$(8)="":s$(9)=""
+6349 sn=33:gosub 3180
+6350 return
