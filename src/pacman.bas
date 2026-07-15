@@ -45,7 +45,7 @@
 350 return:rem 1540
 360 rem init screen
 370 border0: background0:color1:fort=0to6:movspr t,0#0:spritet,0:next:dc=0
-380 gd=0:gc=0:ld=ti:fr=0:gs=100:fa=0:fu=0:fs=0:fd=0:mc=0:el=1:gosub 5900
+380 gd=0:gc=0:ld=ti:fr=0:gs=100:fa=0:fu=0:fs=0:fd=0:mc=0:ce=1:gosub 5900
 390 collision 1,330: rem sprite to sprite collision interrupt
 400 print"{clr}{lblu}";
 410 print"OCCCCCCCCCCCC{CBM-R}CCCCCCCCCCCCP
@@ -152,8 +152,8 @@
 1350 if ca>0 and ca<5 and ai=-1 then gosub 3480
 1351 if ca>0 and ca<5 and ge(ca)=0 then begin
 1352  ac(ca,2)=vg
-1353  if ca=1 and el=1 and dc<=e1 then ac(ca,2)=vg*r1
-1354  if ca=1 and el=1 and dc<=e2 then ac(ca,2)=vg*r2
+1353  if ca=1 and ce=1 and dc<=e1 then ac(ca,2)=vg*r1
+1354  if ca=1 and ce=1 and dc<=e2 then ac(ca,2)=vg*r2
 1355  if gb(ca)=1 then ac(ca,2)=vf
 1356  if ty=10 and (tx<=5 or tx>=21) then ac(ca,2)=ac(ca,2)*0.5
 1357 bend
@@ -189,7 +189,7 @@
 1570  next z
 1572 next t
 1574 sprite 0,0:sleep 0.3
-1580 gd=1:gc=0:ld=ti:fr=0:el=0:sound 5,1,1:lv=lv-1:gosub 4560:if lv<0 then 4600
+1580 gd=1:gc=0:ld=ti:fr=0:ce=0:sound 5,1,1:lv=lv-1:gosub 4560:if lv<0 then 4600
 1590 gosub 3340:goto 740
 1600 rem character defs
 1610 chardef 46,0,0,0,24,24,0,0,0                : rem dots
@@ -423,7 +423,7 @@
 3520 if ty=10 and tx>=11 and tx<=15 then goto 3840
 3530 if gb(ca)=1 then 4150
 3540 d=ac(ca,1):od=d+180:if od>=360 then od=od-360
-3545 if ca=1 and el=1 and dc<=e1 then 3570
+3545 if ca=1 and ce=1 and dc<=e1 then 3570
 3550 if gm=0 then gx=st(ca,0):gy=st(ca,1):goto 3680
 3560 rem chase targets
 3570 if ca=1 then gx=ac(0,5):gy=ac(0,6):goto 3680
@@ -480,7 +480,7 @@
 4030 if tx<13 then ac(ca,1)=90:return
 4040 if tx>13 then ac(ca,1)=270:return
 4050 ac(ca,1)=0:gr(ca)=1
-4052 if ca=4 then el=1
+4052 if ca=4 then ce=1
 4055 return
 4060 rem eyes: return to the pen
 4070 if ty=9 and tx=13 then ac(ca,1)=180:return
