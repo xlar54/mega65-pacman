@@ -11,18 +11,18 @@
 87 pv(1)=100:pv(2)=300:pv(3)=500:pv(4)=700:pv(5)=1000:pv(6)=2000:pv(7)=3000:pv(8)=5000
 88 zc(1)=2:zc(2)=2:zc(3)=18:zc(4)=2:zc(5)=5:zc(6)=7:zc(7)=7:zc(8)=3
 90 goto 4650
-100 dc=dc-1:fd=fd+1:cursor 30,7:print "{lblu}"+right$("000000"+mid$(str$(cs),2),6):gosub 4850
+100 dc=dc-1:fd=fd+1:sh=1:gosub 4860
 105 if (fd=70 or fd=170) and fa<2 then gosub 5650
 110 sound 4,8000,5,2,0,1500,1,0:return
-120 cursor 30,7:print "{lblu}"+right$("000000"+mid$(str$(cs),2),6):gosub 4850:return
+120 cursor 30,7:print "{lblu}"+right$("000000"+mid$(str$(cs),2),6):gosub 4850:sh=0:hu=ti:return
 130 rem interrupt. sound, flash pp, anim pac
 140 ct=ti
-142 sf=16000
-144 if dc<=td*0.75 then sf=19000
-146 if dc<=td*0.5 then sf=22000
-148 if dc<=td*0.25 then sf=25000
-149 if dc<=td*0.1 then sf=28000
-150 if ct-at>=1.95 and fr=0 then sound 1,sf,100,2,sf/2,700,2,2000:at=ct
+142 sf=16000:sg=0
+144 if dc<=td*0.75 then sf=19000:sg=1
+146 if dc<=td*0.5 then sf=22000:sg=2
+148 if dc<=td*0.25 then sf=25000:sg=3
+149 if dc<=td*0.1 then sf=28000:sg=4
+150 if fr=0 and sg<>ss then sound 1,sf,32767,2,sf/2,700,2,2000:ss=sg
 160 if ct-ft >= 0.25 then begin
 170   fp=fp+1:if fp=2 then fp=0
 180   c@&(1,2)=fp:c@&(25,2)=fp:c@&(1,16)=fp:c@&(25,16)=fp
@@ -100,7 +100,7 @@
 880 cursor 11,12:print"      "
 890 rem movement loop
 900 rem current speed and original speed
-910 pc=0:gt=ti:gm=0:ut=ti
+910 pc=0:gt=ti:gm=0:ut=ti:sh=0:hu=ti:ss=-1
 920 fort=0to4
 930  ac(t,2)=vg
 932  if t=0 then ac(t,2)=vp
@@ -165,10 +165,12 @@
 1410  if ac(ca,2)>0 then movspr ca,px+22,py+50 to px+22+dx,py+50+dy,ac(ca,2)
 1420 bend
 1430 next ca
+1431 if sh=1 and ti-hu>=0.1 then gosub 120
 1432 if mc=1 then 1450
 1435 if xx=1 then xx=0:gosub 4230:co%=0:if dth=1 then dth=0:goto 1540
 1440 goto 970
 1450 rem cleared screen
+1452 if sh=1 then gosub 120
 1455 for t=0to4:movspr t,0#0:next t:sound clr:sleep 1
 1460 for t=0to5:sprite t,0:next t:fu=0:fs=0
 1470 forx=1to4
@@ -520,7 +522,7 @@
 4334 return
 4380 rem power pellet: frighten the ghosts
 4385 if fr=1 then gt=gt+(ti-fz)
-4390 gc=gc+1:ld=ti:fr=1:fz=ti:gs=100:nc=0:sound 1,1,1
+4390 gc=gc+1:ld=ti:fr=1:fz=ti:gs=100:nc=0:sound 1,1,1:ss=-1
 4392 if du>0 then sound 5,8000,360,2,2000,1200,2,2048
 4395 if du=0 then fr=0
 4400 for t=1 to 4
@@ -536,7 +538,7 @@
 4470 for t=1 to 4
 4480 if gb(t)=1 then ac(t,2)=vg:sprite t,1,ac(t,0):gb(t)=0
 4490 next t
-4500 sound 5,1,1:at=0
+4500 sound 5,1,1:ss=-1
 4510 return
 4520 fc=6:if (int((ti-fz)*4) and 1)=1 then fc=1
 4530 for t=1 to 4:if gb(t)=1 then sprite t,1,fc
@@ -717,11 +719,11 @@
 6070 chardef 98,24,60,60,126,126,126,24,0:rem bell
 6080 chardef 99,60,66,60,24,24,30,24,0:rem key
 6100 rem cherry sprite
-6101 s$(0)="       ###  ###"
-6102 s$(1)="      ##  ###"
-6103 s$(2)="     ##  ##"
-6104 s$(3)="    ##  ##"
-6105 s$(4)="   ### ###"
+6101 s$(0)="            ###"
+6102 s$(1)="          ###"
+6103 s$(2)="         ##"
+6104 s$(3)="      # ##"
+6105 s$(4)="    ##  ###"
 6106 s$(5)="  ##### #####"
 6107 s$(6)=" ###### ######"
 6108 s$(7)=" ###### ######"
